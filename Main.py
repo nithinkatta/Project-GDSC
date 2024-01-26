@@ -4,6 +4,10 @@ import mediapipe as mp
 import time
 from gtts import gTTS
 import os
+from tensorflow.keras.models import load_model
+import tensorflow.keras.preprocessing.image as image
+import numpy as np
+
 
 # Uninstall playsound : pip uninstall playsound
 # Install playsound of lesser version : pip install playsound==1.2.2
@@ -130,125 +134,150 @@ def main():
     prev = ""
     arr = []
     global data
+
+    #loading the model
+    model = load_model('model.h5')
+
+    class_labels = {0: 'hello', 1: 'thank_you'}
+
     while True:
         success, img = cap.read()
         img = detector.findHands(img)
-        lmList,bbox = detector.findPosition(img,draw= True)
-        #print(lmList)
-        flag = True
-        cv2.line(img, (600, 40), (600, 100), (0, 0, 255), 3)
-        if len(lmList) != 0:
+        # lmList,bbox = detector.findPosition(img,draw= True)
+        # #print(lmList)
+        # flag = True
+        # cv2.line(img, (600, 40), (600, 100), (0, 0, 255), 3)
+        # if len(lmList) != 0:
             # flag = True
-            fingers = detector.fingersUp()
+            # fingers = detector.fingersUp()
             # print(fingers)
-            totalFingers = fingers.count(1)
+            # totalFingers = fingers.count(1)
             # print(totalFingers)
 
             # cv2.rectangle(img, (20, 255), (170, 425), (0, 0, 0), cv2.FILLED)
             
-            x1, y1 = lmList[4][1:]
-            x2, y2 = lmList[8][1:]
+            # x1, y1 = lmList[4][1:]
+            # x2, y2 = lmList[8][1:]
             # print(x1, y1, x2, y2)
 
             # 3. Check which fingers are up   
-            fingers = detector.fingersUp()
+            # fingers = detector.fingersUp()
             # print(fingers)
             # cv2.rectangle(img, (frameR, frameR), (wCam - frameR, hCam - frameR),
             #                 (255, 0, 255), 2)
+        # ret,frame = cap.read()
+        img = cv2.resize(img, (64,64))
+        frame_array = image.img_to_array(img)
+        frame_array = np.expand_dims(frame_array, axis=0)
+        frame_array /= 255.0
 
-            if fingers[0] == 1 and fingers[1] == 0 and fingers[3] == 1 and fingers[4] == 1:
-                # 9. Find distance between fingers
-                length, img, lineInfo = detector.findDistance(4, 8, img)
-                #print(length)
-                # 10. Click mouse if distance short
-                if length < 40:
-                    cur = "Super"
-                    # arr.append(cur)
-                    # obj = gTTS(text=cur, lang='en', slow=False)
-                    # obj.save("super.mp3")
-                    if prev != cur:
-                        # playsound("super.mp3")
-                        arr.append(cur)
-                    prev = cur
-                    cv2.circle(img, (lineInfo[4], lineInfo[5]),
-                                15, (0, 255, 0), cv2.FILLED)
-                    # autopy.mouse.click()
-                    # cv2.putText(img, " ".join(arr), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
-                    flag = False
+        # Make a prediction
+        predictions = model.predict(frame_array)
+        predicted_class_index = np.argmax(predictions)
+        predicted_class = class_labels[predicted_class_index]
+
+        # Display the frame with the predicted class
+        cv2.putText(img, f"Prediction: {predicted_class}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.imshow('Sign Language Recognition', img)
+        cv2.waitKey(1)
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+
+        #     if fingers[0] == 1 and fingers[1] == 0 and fingers[3] == 1 and fingers[4] == 1:
+        #         # 9. Find distance between fingers
+        #         length, img, lineInfo = detector.findDistance(4, 8, img)
+        #         #print(length)
+        #         # 10. Click mouse if distance short
+        #         if length < 40:
+        #             cur = "Super"
+        #             # arr.append(cur)
+        #             # obj = gTTS(text=cur, lang='en', slow=False)
+        #             # obj.save("super.mp3")
+        #             if prev != cur:
+        #                 # playsound("super.mp3")
+        #                 arr.append(cur)
+        #             prev = cur
+        #             cv2.circle(img, (lineInfo[4], lineInfo[5]),
+        #                         15, (0, 255, 0), cv2.FILLED)
+        #             # autopy.mouse.click()
+        #             # cv2.putText(img, " ".join(arr), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #             flag = False
                 
 
-            if fingers[0]==0 and fingers[1]==1 and fingers[2]==1 and fingers[3]==1 and fingers[4]==1 and flag:
-                #  print("I am fine")
-                # time.sleep(1)
-                cur = "I am fine"
-                # obj = gTTS(text=cur, lang='en', slow=False)
-                # obj.save("fine.mp3")
-                if prev != cur:
-                    arr.append(cur)
-                    # playsound(obj.get_audio_bytes())
-                # time.sleep(2)
-                # cv2.putText(img, str("I am fine"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
-                prev = cur
+        #     if fingers[0]==0 and fingers[1]==1 and fingers[2]==1 and fingers[3]==1 and fingers[4]==1 and flag:
+        #         #  print("I am fine")
+        #         # time.sleep(1)
+        #         cur = "I am fine"
+        #         # obj = gTTS(text=cur, lang='en', slow=False)
+        #         # obj.save("fine.mp3")
+        #         if prev != cur:
+        #             arr.append(cur)
+        #             # playsound(obj.get_audio_bytes())
+        #         # time.sleep(2)
+        #         # cv2.putText(img, str("I am fine"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #         prev = cur
 
-            elif fingers[0] == 1 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 1:
-                cur = "are"
-                # obj = gTTS(text=cur, lang='en', slow=False)
-                # obj.save("are.mp3")
-                if prev != cur:
-                    arr.append(cur)
-                    # playsound("are.mp3")
-                # cv2.putText(img, str("Lets play"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
-                prev = cur
+        #     elif fingers[0] == 1 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 1:
+        #         cur = "are"
+        #         # obj = gTTS(text=cur, lang='en', slow=False)
+        #         # obj.save("are.mp3")
+        #         if prev != cur:
+        #             arr.append(cur)
+        #             # playsound("are.mp3")
+        #         # cv2.putText(img, str("Lets play"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #         prev = cur
 
-            elif fingers[0] == 1 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
-                cur = "How"
-                # obj = gTTS(text=cur, lang='en', slow=False)
-                # obj.save("how.mp3")
-                if prev != cur:
-                    arr.append(cur)
-                    # playsound("how.mp3")
-                prev = cur
-                # cv2.putText(img, str("Yes"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #     elif fingers[0] == 1 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+        #         cur = "How"
+        #         # obj = gTTS(text=cur, lang='en', slow=False)
+        #         # obj.save("how.mp3")
+        #         if prev != cur:
+        #             arr.append(cur)
+        #             # playsound("how.mp3")
+        #         prev = cur
+        #         # cv2.putText(img, str("Yes"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
 
-            elif fingers[0] == 1 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
-                # time.sleep(2)
-                cur = "call"
-                # obj = gTTS(text=cur, lang='en', slow=False)
-                # obj.save("call.mp3")
-                if prev != cur:
-                    arr.append(cur)
-                    # playsound("call.mp3")
-                # time.sleep(2)
-                # cv2.putText(img, str("Call"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
-                prev = cur
+        #     elif fingers[0] == 1 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+        #         # time.sleep(2)
+        #         cur = "call"
+        #         # obj = gTTS(text=cur, lang='en', slow=False)
+        #         # obj.save("call.mp3")
+        #         if prev != cur:
+        #             arr.append(cur)
+        #             # playsound("call.mp3")
+        #         # time.sleep(2)
+        #         # cv2.putText(img, str("Call"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #         prev = cur
             
-            elif fingers[0]==1 and fingers[1]==1 and fingers[2]==1 and fingers[3]==0 and fingers[4]==0:
-                cur = "delete"
-                if prev != cur:
-                    if len(arr) > 0:
-                        arr.pop()
-                    if len(data) > 0:
-                        data.pop()
+        #     elif fingers[0]==1 and fingers[1]==1 and fingers[2]==1 and fingers[3]==0 and fingers[4]==0:
+        #         cur = "delete"
+        #         if prev != cur:
+        #             if len(arr) > 0:
+        #                 arr.pop()
+        #             if len(data) > 0:
+        #                 data.pop()
                     
-                prev = cur
+        #         prev = cur
             
-            elif fingers[0]== 0 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
-                cur = "."
-                if prev != cur:
-                    arr.append(cur)
-                data += " ".join(arr)
-                arr = []
-                # cv2.putText(img, str("Stop"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
-                prev = cur
+        #     elif fingers[0]== 0 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+        #         cur = "."
+        #         if prev != cur:
+        #             arr.append(cur)
+        #         data += " ".join(arr)
+        #         arr = []
+        #         # cv2.putText(img, str("Stop"), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 5 )
+        #         prev = cur
 
-            elif fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
-                cur = "You"
-                # obj = gTTS(text=cur, lang='en', slow=False)
-                # obj.save("you.mp3")
-                if prev != cur:
-                    arr.append(cur)
-                    # playsound("you.mp3")
-                prev = cur
+        #     elif fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+        #         cur = "You"
+        #         # obj = gTTS(text=cur, lang='en', slow=False)
+        #         # obj.save("you.mp3")
+        #         if prev != cur:
+        #             arr.append(cur)
+        #             # playsound("you.mp3")
+        #         prev = cur
             
 
             # elif totalFingers == 1:
@@ -263,16 +292,18 @@ def main():
             #     break
 
         
-        cv2.putText(img, " ".join(arr), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1 ,cv2.LINE_AA)
+        # cv2.putText(img, " ".join(arr), (45, 65), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 1 ,cv2.LINE_AA)
 
-        if len(arr)>=10:
-            data.append(" ".join(arr))
-            arr = []
-        cv2.imshow("Image", img)
-        cv2.waitKey(3)
-        # time.sleep(2)
+        # if len(arr)>=10:
+        #     data.append(" ".join(arr))
+        #     arr = []
+        # cv2.imshow("Image", img)
+        # cv2.waitKey(3)
+        # # time.sleep(2)
         
 
 
 if __name__ == "__main__":
     main()
+    cap.release()
+    cv2.destroyAllWindows()
