@@ -10,7 +10,6 @@ IMAGE_SIZE = (64, 64)
 BATCH_SIZE = 32
 EPOCHS = 10
 
-
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     shear_range=0.2,
@@ -58,7 +57,7 @@ img_array /= 255.0
 predictions = model.predict(img_array)
 
 predicted_class_index = np.argmax(predictions)
-class_labels = {0: 'hello', 1: 'thank_you'}
+class_labels = {0: 'are', 1: 'hello',2:'how',3:'iamfine',4:'super',5:'thank_you'}
 predicted_class = class_labels[predicted_class_index]
 
 print(f"Predicted class: {predicted_class}")
